@@ -24,7 +24,10 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import javax.crypto.SecretKey;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -51,6 +54,8 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
+        Scene scene = new Scene(root, 1024, 576);
+        stage.setScene(scene);
         showLoginScene();
         stage.setTitle("Othello");
         stage.show();
@@ -146,8 +151,9 @@ public class HelloApplication extends Application {
         StackPane root = new StackPane(layout);
         root.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
 
-        Scene scene = new Scene(root, 1024, 576);
-        stage.setScene(scene);
+//        Scene scene = new Scene(root, 1024, 576);
+//        stage.setScene(scene);
+        stage.getScene().setRoot(root);
     }
 
     private boolean authenticateUser(String username, String password) {
@@ -314,8 +320,9 @@ public class HelloApplication extends Application {
         StackPane root = new StackPane(layout);
         root.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
 
-        Scene scene = new Scene(root, 1024, 576);
-        stage.setScene(scene);
+//        Scene scene = new Scene(root, 1024, 576);
+        stage.getScene().setRoot(root);
+//        stage.setScene();
     }
 
     private void showGameBoardScene() {
@@ -438,8 +445,10 @@ public class HelloApplication extends Application {
 
 
         // Game board
-        board = new Color[boardSize][boardSize];
-        initializeBoard();
+        if(board == null){
+            board = new Color[boardSize][boardSize];
+            initializeBoard();
+        }
 
         boardGrid = new GridPane();
         boardGrid.setAlignment(Pos.CENTER);
@@ -564,8 +573,9 @@ public class HelloApplication extends Application {
 
         addGhostPieces();
 
-        scene = new Scene(root, 1024, 576);
-        stage.setScene(scene);
+//        scene = new Scene(root, 1024, 576);
+//        stage.setScene(scene);
+        stage.getScene().setRoot(root);
         boardGrid.getChildren().clear();
         restoreBoardUI();
         updateScores();
@@ -878,13 +888,20 @@ public class HelloApplication extends Application {
         dialog.setContentText("Enter save file name:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(this::saveGame);
+        if (result.isPresent()) {
+            try {
+                SecretKey key = CryptoUtils.loadOrGenerateKey("saves/secretKey.key");
+                saveGame(result.get(), key);
+            } catch (IOException e) {
+                System.out.println("An error occurred while loading the encryption key: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
-    // Method to display saved games and allow the user to choose one to load
     private void promptLoadGame() {
         File saveDir = new File("saves");
-        File[] saveFiles = saveDir.listFiles((dir, name) -> name.endsWith(".txt"));
+        File[] saveFiles = saveDir.listFiles((dir, name) -> name.endsWith(".bin"));
         if (saveFiles == null || saveFiles.length == 0) {
             System.out.println("No saved games found.");
             return;
@@ -892,7 +909,7 @@ public class HelloApplication extends Application {
 
         List<String> choices = Arrays.stream(saveFiles)
                 .map(File::getName)
-                .map(name -> name.substring(0, name.length() - 4)) // Remove .txt extension
+                .map(name -> name.substring(0, name.length() - 4)) // Remove .bin extension
                 .collect(Collectors.toList());
 
         ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
@@ -901,54 +918,76 @@ public class HelloApplication extends Application {
         dialog.setContentText("Choose your saved game:");
 
         Optional<String> result = dialog.showAndWait();
-        result.ifPresent(this::loadGame);
+        if (result.isPresent()) {
+            try {
+                SecretKey key = CryptoUtils.loadKey("saves/secretKey.key");
+                loadGame(result.get(), key);
+            } catch (IOException e) {
+                System.out.println("An error occurred while loading the encryption key: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
     }
 
 
-    private void saveGame(String fileName) {
-        String filePath = "saves/" + fileName + ".txt"; // Store saves in a "saves" directory
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-            writer.write("Player 1: " + player1Name + "\n");
-            writer.write("Player 2: " + player2Name + "\n");
-            writer.write("Board Size: " + boardSize + "\n");
-            writer.write("White Turn: " + whiteTurn + "\n");
-            writer.write("Time Taken: " + timeSeconds + "\n");
-            writer.write("Player 1 Score: " + player1Score.getText() + "\n");
-            writer.write("Player 2 Score: " + player2Score.getText() + "\n");
 
-            for (int row = 0; row < boardSize; row++) {
-                for (int col = 0; col < boardSize; col++) {
-                    if (board[row][col] == null) {
-                        writer.write("EMPTY ");
-                    } else if (board[row][col] == Color.WHITE) {
-                        writer.write("WHITE ");
-                    } else if (board[row][col] == Color.BLACK) {
-                        writer.write("BLACK ");
-                    } else if (board[row][col] == Color.GRAY) {
-                        writer.write("EMPTY "); // Treat ghost pieces as EMPTY
-                    }
+
+    private void saveGame(String fileName, SecretKey key) {
+        String filePath = "saves/" + fileName + ".bin"; // Store saves in a "saves" directory
+        StringBuilder gameData = new StringBuilder();
+
+        gameData.append("Player 1: ").append(player1Name).append("\n");
+        gameData.append("Player 2: ").append(player2Name).append("\n");
+        gameData.append("Board Size: ").append(boardSize).append("\n");
+        gameData.append("White Turn: ").append(whiteTurn).append("\n");
+        gameData.append("Time Taken: ").append(timeSeconds).append("\n");
+        gameData.append("Player 1 Score: ").append(player1Score.getText()).append("\n");
+        gameData.append("Player 2 Score: ").append(player2Score.getText()).append("\n");
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                if (board[row][col] == null) {
+                    gameData.append("EMPTY ");
+                } else if (board[row][col] == Color.WHITE) {
+                    gameData.append("WHITE ");
+                } else if (board[row][col] == Color.BLACK) {
+                    gameData.append("BLACK ");
+                } else if (board[row][col] == Color.GRAY) {
+                    gameData.append("EMPTY "); // Treat ghost pieces as EMPTY
                 }
-                writer.newLine();
             }
+            gameData.append("\n");
+        }
+
+        try {
+            byte[] encryptedData = CryptoUtils.encrypt(gameData.toString(), key);
+            Files.write(Paths.get(filePath), encryptedData);
             System.out.println("Game saved successfully! " + filePath);
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println("An error occurred while saving the game: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private void loadGame(String fileName) {
-        String filePath = "saves/" + fileName + ".txt";
+
+    private void loadGame(String fileName, SecretKey key) {
+        String filePath = "saves/" + fileName + ".bin";
         System.out.println("Loading game from file: " + filePath);
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        try {
+            byte[] encryptedData = Files.readAllBytes(Paths.get(filePath));
+            String gameData = CryptoUtils.decrypt(encryptedData, key);
+
+            BufferedReader reader = new BufferedReader(new StringReader(gameData));
             player1Name = reader.readLine().split(": ")[1];
             player2Name = reader.readLine().split(": ")[1];
-            boardSize = Integer.parseInt(reader.readLine().split(": ")[1]);
-            whiteTurn = Boolean.parseBoolean(reader.readLine().split(": ")[1]);
-            timeSeconds = Integer.parseInt(reader.readLine().split(": ")[1]);
-            player1Score.setText(reader.readLine().split(": ")[1]);
-            player2Score.setText(reader.readLine().split(": ")[1]);
+            boardSize = Integer.parseInt(reader.readLine().split(": ")[1].trim());
+            whiteTurn = Boolean.parseBoolean(reader.readLine().split(": ")[1].trim());
+            timeSeconds = Integer.parseInt(reader.readLine().split(": ")[1].trim());
+            String p1Score = reader.readLine().split(": ")[1].trim();
+            String p2Score = reader.readLine().split(": ")[1].trim();
+            player1Score = new Text(p1Score);
+            player2Score = new Text(p2Score);
 
             board = new Color[boardSize][boardSize];
             for (int row = 0; row < boardSize; row++) {
@@ -977,11 +1016,12 @@ public class HelloApplication extends Application {
             startTimer(timeSeconds);
 
             System.out.println("Game loaded successfully!");
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println("An error occurred while loading the game: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
 
     private void restoreBoardUI() {
         boardGrid.getChildren().clear(); // Clear existing cells to avoid duplicates
