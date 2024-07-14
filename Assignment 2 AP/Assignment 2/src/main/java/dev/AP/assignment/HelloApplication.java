@@ -11,10 +11,21 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.GaussianBlur;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
@@ -25,14 +36,23 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import javax.crypto.SecretKey;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class HelloApplication extends Application {
+    HBox root = new HBox();
     private Stage stage;
     private String player1Name;
     private String player2Name;
@@ -49,7 +69,17 @@ public class HelloApplication extends Application {
     private Text player1Score;
     private Text player2Score;
     private String loggedInUser;
-    HBox root = new HBox();
+
+    public HelloApplication() {
+        File saveDir = new File("saves");
+        if (!saveDir.exists()) {
+            saveDir.mkdir();
+        }
+    }
+
+    public static void main(String[] args) {
+        launch();
+    }
 
     @Override
     public void start(Stage stage) {
@@ -73,7 +103,8 @@ public class HelloApplication extends Application {
         title.setFill(Color.WHITE);
         title.setEffect(new DropShadow());
         titleBox.setAlignment(Pos.CENTER);
-        titleBox.setBackground(new Background(new BackgroundFill(Color.rgb(38,38,39), CornerRadii.EMPTY, Insets.EMPTY)));
+        titleBox.setBackground(new Background(new BackgroundFill(Color.rgb(38, 38, 39), CornerRadii.EMPTY,
+                Insets.EMPTY)));
         titleBox.setPadding(new Insets(10, 0, 10, 0));
 
         // Username
@@ -81,7 +112,8 @@ public class HelloApplication extends Application {
         usernameLabel.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         usernameLabel.setTextFill(Color.WHITE);
         TextField usernameField = new TextField();
-        usernameField.setBackground(new Background(new BackgroundFill(Color.rgb(25,24,24), new CornerRadii(10, 10, 10, 10, false), Insets.EMPTY)));
+        usernameField.setBackground(new Background(new BackgroundFill(Color.rgb(25, 24, 24), new CornerRadii(10, 10,
+                10, 10, false), Insets.EMPTY)));
         usernameField.setStyle("-fx-text-fill: white;");
         usernameField.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         HBox usernameBox = new HBox(10, usernameLabel, usernameField);
@@ -92,7 +124,8 @@ public class HelloApplication extends Application {
         passwordLabel.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         passwordLabel.setTextFill(Color.WHITE);
         TextField passwordField = new TextField();
-        passwordField.setBackground(new Background(new BackgroundFill(Color.rgb(25,24,24), new CornerRadii(10, 10, 10, 10, false), Insets.EMPTY)));
+        passwordField.setBackground(new Background(new BackgroundFill(Color.rgb(25, 24, 24), new CornerRadii(10, 10,
+                10, 10, false), Insets.EMPTY)));
         passwordField.setStyle("-fx-text-fill: white;");
         passwordField.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         HBox passwordBox = new HBox(10, passwordLabel, passwordField);
@@ -103,7 +136,8 @@ public class HelloApplication extends Application {
         loginButton.setStyle("-fx-padding: 8 15 15 15;" +
                 "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         loginButton.setOnAction(e -> {
@@ -128,7 +162,8 @@ public class HelloApplication extends Application {
             loginButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -137,7 +172,8 @@ public class HelloApplication extends Application {
             loginButton.setStyle("-fx-padding: 8 15 15 15;" +
                     "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                    "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         });
@@ -146,7 +182,8 @@ public class HelloApplication extends Application {
         VBox layout = new VBox(20, titleBox, usernameBox, passwordBox, loginBox);
         layout.setPadding(new Insets(20));
         layout.setAlignment(Pos.CENTER);
-        layout.setBackground(new Background(new BackgroundFill(Color.rgb(38,38,39), CornerRadii.EMPTY, Insets.EMPTY)));
+        layout.setBackground(new Background(new BackgroundFill(Color.rgb(38, 38, 39), CornerRadii.EMPTY,
+                Insets.EMPTY)));
 
         StackPane root = new StackPane(layout);
         root.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -162,7 +199,6 @@ public class HelloApplication extends Application {
         return !username.isEmpty() && !password.isEmpty();
     }
 
-
     private void showNewGameScene() {
         // Title
         Text title = new Text("Othello");
@@ -173,7 +209,8 @@ public class HelloApplication extends Application {
 
         HBox titleBox = new HBox(title);
         titleBox.setAlignment(Pos.CENTER);
-        titleBox.setBackground(new Background(new BackgroundFill(Color.rgb(38,38,39), new CornerRadii(10, 10, 10, 10, false), Insets.EMPTY)));
+        titleBox.setBackground(new Background(new BackgroundFill(Color.rgb(38, 38, 39), new CornerRadii(10, 10, 10,
+                10, false), Insets.EMPTY)));
         titleBox.setPadding(new Insets(10, 0, 10, 0));
 
         // Player 1 Name
@@ -181,7 +218,8 @@ public class HelloApplication extends Application {
         player1Label.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         player1Label.setTextFill(Color.WHITE);
         TextField player1Field = new TextField();
-        player1Field.setBackground(new Background(new BackgroundFill(Color.rgb(25,24,24), new CornerRadii(10, 10, 10, 10, false), Insets.EMPTY)));
+        player1Field.setBackground(new Background(new BackgroundFill(Color.rgb(25, 24, 24), new CornerRadii(10, 10,
+                10, 10, false), Insets.EMPTY)));
         player1Field.setStyle("-fx-text-fill: white;");
         player1Field.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         HBox player1Box = new HBox(10, player1Label, player1Field);
@@ -192,7 +230,8 @@ public class HelloApplication extends Application {
         player2Label.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         player2Label.setTextFill(Color.WHITE);
         TextField player2Field = new TextField();
-        player2Field.setBackground(new Background(new BackgroundFill(Color.rgb(25,24,24), new CornerRadii(10, 10, 10, 10, false), Insets.EMPTY)));
+        player2Field.setBackground(new Background(new BackgroundFill(Color.rgb(25, 24, 24), new CornerRadii(10, 10,
+                10, 10, false), Insets.EMPTY)));
         player2Field.setStyle("-fx-text-fill: white;");
         player2Field.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 20));
         HBox player2Box = new HBox(10, player2Label, player2Field);
@@ -205,7 +244,8 @@ public class HelloApplication extends Application {
         difficultyComboBox.setStyle("-fx-padding: 8 15 15 15;" +
                 "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;-fx-font-size: 1.1em;");
         difficultyComboBox.setOnAction(e -> {
@@ -223,13 +263,14 @@ public class HelloApplication extends Application {
         playButton.setStyle("-fx-padding: 8 15 15 15;" +
                 "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         playButton.setOnAction(e -> {
             player1Name = player1Field.getText();
             player2Name = player2Field.getText();
-            showGameBoardScene();
+            showGameBoardScene(false);
             startTimer(timeSeconds);
         });
 
@@ -241,7 +282,8 @@ public class HelloApplication extends Application {
             playButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -250,7 +292,8 @@ public class HelloApplication extends Application {
             playButton.setStyle("-fx-padding: 8 15 15 15;" +
                     "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                    "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         });
@@ -259,7 +302,8 @@ public class HelloApplication extends Application {
         loadGameButton.setStyle("-fx-padding: 8 15 15 15; " +
                 "                -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0; " +
                 "                -fx-background-radius: 8; " +
-                "                -fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c); " +
+                "                -fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%)" +
+                ", #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c); " +
                 "                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1); " +
                 "                -fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         loadGameButton.setOnAction(e -> promptLoadGame());
@@ -268,7 +312,8 @@ public class HelloApplication extends Application {
             loadGameButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -277,7 +322,8 @@ public class HelloApplication extends Application {
             loadGameButton.setStyle("-fx-padding: 8 15 15 15;" +
                     "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                    "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         });
@@ -286,7 +332,8 @@ public class HelloApplication extends Application {
         deleteButton.setStyle("-fx-padding: 8 15 15 15; " +
                 "                -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0; " +
                 "                -fx-background-radius: 8; " +
-                "                -fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c); " +
+                "                -fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%)" +
+                ", #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c); " +
                 "                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1); " +
                 "                -fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         deleteButton.setOnAction(e -> promptDeleteSaveGame());
@@ -295,7 +342,8 @@ public class HelloApplication extends Application {
             deleteButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -304,18 +352,19 @@ public class HelloApplication extends Application {
             deleteButton.setStyle("-fx-padding: 8 15 15 15;" +
                     "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                    "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         });
-
 
 
         // Layout
         VBox layout = new VBox(20, titleBox, player1Box, player2Box, difficultyBox, loadGameButton, deleteButton);
         layout.setPadding(new Insets(20));
         layout.setAlignment(Pos.CENTER);
-        layout.setBackground(new Background(new BackgroundFill(Color.rgb(38,38,39), CornerRadii.EMPTY, Insets.EMPTY)));
+        layout.setBackground(new Background(new BackgroundFill(Color.rgb(38, 38, 39), CornerRadii.EMPTY,
+                Insets.EMPTY)));
 
         StackPane root = new StackPane(layout);
         root.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
@@ -325,18 +374,22 @@ public class HelloApplication extends Application {
 //        stage.setScene();
     }
 
-    private void showGameBoardScene() {
+    private void showGameBoardScene(Boolean val) {
         Scene scene;
 
         // Top section with player info and game controls
-        Text player1NameText = new Text("White");
-        Text player2NameText = new Text("Black");
+        Text player1NameText;
+        Text player2NameText;
 
-        if (!player1Name.equals(" "))
+        if (!player1Name.isBlank() || !player1Name.isEmpty())
             player1NameText = new Text(player1Name);
+        else
+            player1NameText = new Text("White");
 
-        if (!player2Name.equals(" "))
+        if (!player1Name.isBlank() || !player1Name.isEmpty())
             player2NameText = new Text(player2Name);
+        else
+            player2NameText = new Text("Black");
 
         player1NameText.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 40));
         player2NameText.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 40));
@@ -366,12 +419,13 @@ public class HelloApplication extends Application {
 
         VBox topBox = new VBox(50, player1Box, turnBox, player2Box);
         topBox.setAlignment(Pos.CENTER);
-        topBox.setBackground(new Background(new BackgroundFill(	Color.rgb(25,24,24), CornerRadii.EMPTY, Insets.EMPTY)));
+        topBox.setBackground(new Background(new BackgroundFill(Color.rgb(25, 24, 24), CornerRadii.EMPTY,
+                Insets.EMPTY)));
         topBox.setPadding(new Insets(10));
 
         VBox emptyBox = new VBox();
 
-        VBox sideBox = new VBox(50,topBox);
+        VBox sideBox = new VBox(50, topBox);
         sideBox.setAlignment(Pos.CENTER);
         sideBox.setEffect(new DropShadow());
 
@@ -380,7 +434,8 @@ public class HelloApplication extends Application {
         resetButton.setStyle("-fx-padding: 8 15 15 15;" +
                 "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#13a343 0%,#12903b 100%), #249d40, #3ad86e, radial-gradient(center 50% 50%, radius 100%,#3ad96e,#2cc54e);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#13a343 0%,#12903b 100%), #249d40, " +
+                "#3ad86e, radial-gradient(center 50% 50%, radius 100%,#3ad96e,#2cc54e);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         resetButton.setOnAction(e -> resetGame());
@@ -389,7 +444,8 @@ public class HelloApplication extends Application {
         saveButton.setStyle("-fx-padding: 8 15 15 15;" +
                 " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, #3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, " +
+                "#3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -401,7 +457,8 @@ public class HelloApplication extends Application {
         loadButton.setStyle("-fx-padding: 8 15 15 15;" +
                 " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, #6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, " +
+                "#6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -411,26 +468,28 @@ public class HelloApplication extends Application {
         pauseButton.setStyle("-fx-padding: 8 15 15 15;" +
                 " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, #d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, " +
+                "#d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 1.1em;-fx-text-fill: white;");
         pauseButton.setOnAction(e -> {
-            if (pauseButton.getText().equals("Pause")){
+            if (pauseButton.getText().equals("Pause")) {
                 showPauseMenu();
                 root.setEffect(new GaussianBlur());
                 root.setDisable(true);
-            }
-            else{
+            } else {
                 root.setEffect(null);
             }
-            togglePause();});
+            togglePause();
+        });
 
         Button endButton = new Button("Exit");
         endButton.setStyle("-fx-padding: 8 15 15 15;" +
                 "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                 "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                 "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         endButton.setOnAction(e -> System.exit(0));
@@ -445,7 +504,7 @@ public class HelloApplication extends Application {
 
 
         // Game board
-        if(board == null){
+        if (!val) {
             board = new Color[boardSize][boardSize];
             initializeBoard();
         }
@@ -453,7 +512,8 @@ public class HelloApplication extends Application {
         boardGrid = new GridPane();
         boardGrid.setAlignment(Pos.CENTER);
         boardGrid.setPadding(new Insets(20));
-        boardGrid.setBackground(new Background(new BackgroundFill(Color.rgb(39, 38, 38), CornerRadii.EMPTY, Insets.EMPTY)));
+        boardGrid.setBackground(new Background(new BackgroundFill(Color.rgb(39, 38, 38), CornerRadii.EMPTY,
+                Insets.EMPTY)));
         boardGrid.setEffect(new DropShadow());
 
         for (int row = 0; row < boardSize; row++) {
@@ -474,7 +534,8 @@ public class HelloApplication extends Application {
             resetButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -483,7 +544,8 @@ public class HelloApplication extends Application {
             resetButton.setStyle("-fx-padding: 8 15 15 15;" +
                     "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#13a343 0%,#12903b 100%), #249d40, #3ad86e, radial-gradient(center 50% 50%, radius 100%,#3ad96e,#2cc54e);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#13a343 0%,#12903b 100%), #249d40, " +
+                    "#3ad86e, radial-gradient(center 50% 50%, radius 100%,#3ad96e,#2cc54e);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         });
@@ -492,7 +554,8 @@ public class HelloApplication extends Application {
             saveButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -501,7 +564,8 @@ public class HelloApplication extends Application {
             saveButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, #3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, " +
+                    "#3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -511,7 +575,8 @@ public class HelloApplication extends Application {
             loadButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -520,7 +585,8 @@ public class HelloApplication extends Application {
             loadButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, #6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, " +
+                    "#6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -530,7 +596,8 @@ public class HelloApplication extends Application {
             pauseButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -539,7 +606,8 @@ public class HelloApplication extends Application {
             pauseButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, #d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, " +
+                    "#d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -549,7 +617,8 @@ public class HelloApplication extends Application {
             endButton.setStyle("-fx-padding: 8 15 15 15;" +
                     " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;" +
                     "-fx-font-size: 1.1em;-fx-text-fill: white;");
@@ -558,7 +627,8 @@ public class HelloApplication extends Application {
             endButton.setStyle("-fx-padding: 8 15 15 15;" +
                     "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
                     "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                    "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
                     "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
                     "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
         });
@@ -666,6 +736,7 @@ public class HelloApplication extends Application {
             }
         }
     }
+
     private void addGhostPieces() {
 
         for (int row = 0; row < boardSize; row++) {
@@ -681,12 +752,14 @@ public class HelloApplication extends Application {
         board[row][col] = Color.GRAY;
         updateGhostCell(row, col);
     }
+
     private Circle createGhostPiece() {
         Circle piece = new Circle(20); // Adjust the radius as needed
         piece.setFill(Color.DARKGRAY);
         piece.setStroke(Color.DARKGRAY);
         return piece;
     }
+
     private void updateGhostCell(int row, int col) {
         StackPane cell = (StackPane) getNodeByRowColumnIndex(row, col, boardGrid);
         if (cell != null) {
@@ -748,11 +821,474 @@ public class HelloApplication extends Application {
         timer.cancel();
     }
 
-    public HelloApplication() {
+    private void promptDeleteSaveGame() {
         File saveDir = new File("saves");
-        if (!saveDir.exists()) {
-            saveDir.mkdir();
+        File[] saveFiles = saveDir.listFiles((dir, name) -> name.endsWith(".txt"));
+        if (saveFiles == null || saveFiles.length == 0) {
+            System.out.println("No saved games found.");
+            return;
         }
+
+        BinarySearchTree bst = new BinarySearchTree();
+        for (File file : saveFiles) {
+            String name = file.getName().substring(0, file.getName().length() - 4); // Remove .txt extension
+            bst.insert(name);
+        }
+
+        List<String> choices = Arrays.stream(saveFiles)
+                .map(File::getName)
+                .map(name -> name.substring(0, name.length() - 4)) // Remove .txt extension
+                .collect(Collectors.toList());
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
+        dialog.setTitle("Delete Saved Game");
+        dialog.setHeaderText("Delete a saved game");
+        dialog.setContentText("Choose a save file to delete:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(fileName -> {
+            bst.delete(fileName);
+            deleteGameFile(fileName);
+        });
+    }
+
+    private void deleteGameFile(String fileName) {
+        String filePath = "saves/" + fileName + ".txt";
+        File file = new File(filePath);
+        if (file.delete()) {
+            System.out.println("Saved game " + fileName + " deleted successfully.");
+        } else {
+            System.out.println("Failed to delete saved game " + fileName + ".");
+        }
+    }
+
+    // Method to prompt user for save file name
+    private void promptSaveGame() {
+        TextInputDialog dialog = new TextInputDialog("savegame");
+        dialog.setTitle("Save Game");
+        dialog.setHeaderText("Save your game");
+        dialog.setContentText("Enter save file name:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                SecretKey key = CryptoUtils.loadOrGenerateKey("saves/secretKey.key");
+                saveGame(result.get(), key);
+            } catch (IOException e) {
+                System.out.println("An error occurred while loading the encryption key: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void promptLoadGame() {
+        File saveDir = new File("saves");
+        File[] saveFiles = saveDir.listFiles((dir, name) -> name.endsWith(".bin"));
+        if (saveFiles == null || saveFiles.length == 0) {
+            System.out.println("No saved games found.");
+            return;
+        }
+
+        List<String> choices = Arrays.stream(saveFiles)
+                .map(File::getName)
+                .map(name -> name.substring(0, name.length() - 4)) // Remove .bin extension
+                .collect(Collectors.toList());
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
+        dialog.setTitle("Load Game");
+        dialog.setHeaderText("Load a saved game");
+        dialog.setContentText("Choose your saved game:");
+
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                SecretKey key = CryptoUtils.loadKey("saves/secretKey.key");
+                loadGame(result.get(), key);
+            } catch (IOException e) {
+                System.out.println("An error occurred while loading the encryption key: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveGame(String fileName, SecretKey key) {
+        String filePath = "saves/" + fileName + ".bin"; // Store saves in a "saves" directory
+        StringBuilder gameData = new StringBuilder();
+
+        gameData.append("Player 1: ").append(
+                player1Name.isEmpty() || player1Name.isBlank() ? "White" : player1Name).append("\n");
+        gameData.append("Player 2: ").append(
+                player2Name.isEmpty() || player2Name.isBlank() ? "Black" : player2Name).append("\n");
+        gameData.append("Board Size: ").append(boardSize).append("\n");
+        gameData.append("White Turn: ").append(whiteTurn).append("\n");
+        gameData.append("Time Taken: ").append(timeSeconds).append("\n");
+        gameData.append("Player 1 Score: ").append(player1Score.getText()).append("\n");
+        gameData.append("Player 2 Score: ").append(player2Score.getText()).append("\n");
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                if (board[row][col] == null) {
+                    gameData.append("EMPTY ");
+                } else if (board[row][col] == Color.WHITE) {
+                    gameData.append("WHITE ");
+                } else if (board[row][col] == Color.BLACK) {
+                    gameData.append("BLACK ");
+                } else if (board[row][col] == Color.GRAY) {
+                    gameData.append("EMPTY "); // Treat ghost pieces as EMPTY
+                }
+            }
+            gameData.append("\n");
+        }
+
+        try {
+            byte[] encryptedData = CryptoUtils.encrypt(gameData.toString(), key);
+            Files.write(Paths.get(filePath), encryptedData);
+            System.out.println("Game saved successfully! " + filePath);
+        } catch (Exception e) {
+            System.out.println("An error occurred while saving the game: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void loadGame(String fileName, SecretKey key) {
+        String filePath = "saves/" + fileName + ".bin";
+        System.out.println("Loading game from file: " + filePath);
+
+        try {
+            byte[] encryptedData = Files.readAllBytes(Paths.get(filePath));
+            String gameData = CryptoUtils.decrypt(encryptedData, key);
+
+            BufferedReader reader = new BufferedReader(new StringReader(gameData));
+            player1Name = reader.readLine().split(": ")[1];
+            player2Name = reader.readLine().split(": ")[1];
+            boardSize = Integer.parseInt(reader.readLine().split(": ")[1].trim());
+            whiteTurn = Boolean.parseBoolean(reader.readLine().split(": ")[1].trim());
+            timeSeconds = Integer.parseInt(reader.readLine().split(": ")[1].trim());
+            String p1Score = reader.readLine().split(": ")[1].trim();
+            String p2Score = reader.readLine().split(": ")[1].trim();
+            player1Score = new Text(p1Score);
+            player2Score = new Text(p2Score);
+
+            board = new Color[boardSize][boardSize];
+            for (int row = 0; row < boardSize; row++) {
+                String[] line = reader.readLine().split(" ");
+                for (int col = 0; col < boardSize; col++) {
+                    switch (line[col]) {
+                        case "WHITE":
+                            board[row][col] = Color.WHITE;
+                            break;
+                        case "BLACK":
+                            board[row][col] = Color.BLACK;
+                            break;
+                        case "EMPTY":
+                            board[row][col] = null;
+                            break;
+                    }
+                }
+            }
+
+            // Refresh UI to reflect the loaded game state
+            showGameBoardScene(true);
+            restoreBoardUI();
+            updateScores();
+            turnLabel.setText(whiteTurn ? "White turn" : "Black turn");
+            isPaused = false;
+            startTimer(timeSeconds);
+
+            System.out.println("Game loaded successfully!");
+        } catch (Exception e) {
+            System.out.println("An error occurred while loading the game: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void restoreBoardUI() {
+        boardGrid.getChildren().clear(); // Clear existing cells to avoid duplicates
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                StackPane cell = createCell(row, col);
+                boardGrid.add(cell, col, row);
+            }
+        }
+    }
+
+    private void startTimer(int initialTime) {
+        if (timer != null) {
+            timer.cancel();
+        }
+        timeSeconds = initialTime;
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (!isPaused) {
+                    timeSeconds++;
+                    int minutes = timeSeconds / 60;
+                    int seconds = timeSeconds % 60;
+                    timerLabel.setText(String.format("%02d:%02d", minutes, seconds));
+                }
+            }
+        }, 1000, 1000);
+    }
+
+    private void togglePause() {
+        isPaused = !isPaused;
+        pauseButton.setText(isPaused ? "Resume" : "Pause");
+    }
+
+    private void updateScores() {
+        int whiteScore = 0;
+        int blackScore = 0;
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                if (board[row][col] == Color.WHITE) {
+                    whiteScore++;
+                } else if (board[row][col] == Color.BLACK) {
+                    blackScore++;
+                }
+            }
+        }
+
+        player1Score.setText(String.valueOf(whiteScore));
+        player2Score.setText(String.valueOf(blackScore));
+    }
+
+    private void checkGameOver() {
+        boolean hasEmptyCell = false;
+        boolean hasValidMoveWhite = false;
+        boolean hasValidMoveBlack = false;
+
+        for (int row = 0; row < boardSize; row++) {
+            for (int col = 0; col < boardSize; col++) {
+                if (board[row][col] == null) {
+                    hasEmptyCell = true;
+                    if (isValidMove(row, col, Color.WHITE)) {
+                        hasValidMoveWhite = true;
+                    }
+                    if (isValidMove(row, col, Color.BLACK)) {
+                        hasValidMoveBlack = true;
+                    }
+                }
+            }
+        }
+
+        if (!hasEmptyCell || (!hasValidMoveWhite && !hasValidMoveBlack)) {
+            declareWinner();
+        } else if (!hasValidMoveWhite && whiteTurn) {
+            whiteTurn = false; // Skip White's turn
+            turnLabel.setText("Black turn");
+        } else if (!hasValidMoveBlack && !whiteTurn) {
+            whiteTurn = true; // Skip Black's turn
+            turnLabel.setText("White turn");
+        }
+    }
+
+    private void declareWinner() {
+        int whiteScore = Integer.parseInt(player1Score.getText());
+        int blackScore = Integer.parseInt(player2Score.getText());
+
+        String winner;
+        if (whiteScore > blackScore) {
+            winner = player1Name + " (White) wins!";
+        } else if (blackScore > whiteScore) {
+            winner = player2Name + " (Black) wins!";
+        } else {
+            winner = "It's a draw!";
+        }
+
+        // Display the winner
+        turnLabel.setText(winner);
+        timer.cancel();
+        pauseButton.setDisable(true);
+    }
+
+    private void showPauseMenu() {
+
+        Stage primaryStage = new Stage();
+
+        // Title
+        Text title = new Text("Othello");
+        title.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 50));
+        title.setUnderline(true);
+        title.setFill(Color.WHITE);
+
+        HBox titleBox = new HBox(title);
+        titleBox.setAlignment(Pos.CENTER);
+
+        // Resume Button
+        Button resumeButton = new Button("RESUME");
+        resumeButton.setStyle("-fx-padding: 8 15 15 15;" +
+                "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                "-fx-background-radius: 8;" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
+        resumeButton.setOnAction(e -> {
+            root.setDisable(false);
+            pauseButton.fire();
+            primaryStage.close();
+        });
+
+        HBox resumeBox = new HBox(10, resumeButton);
+        resumeBox.setAlignment(Pos.CENTER);
+
+        // Settings Button
+        Button settingsButton = new Button("SETTINGS");
+        settingsButton.setStyle("-fx-padding: 8 15 15 15;" +
+                " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                "-fx-background-radius: 8;" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, " +
+                "#6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 1.1em;-fx-text-fill: white;");
+
+        HBox settingsBox = new HBox(10, settingsButton);
+        settingsBox.setAlignment(Pos.CENTER);
+
+        Setting setting = new Setting();
+        settingsButton.setOnAction(e -> Setting.openSettings());
+
+        // Log Out Button
+        Button logoutButton = new Button("LOG OUT");
+        logoutButton.setStyle("-fx-padding: 8 15 15 15;" +
+                " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                "-fx-background-radius: 8;" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, " +
+                "#3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        logoutButton.setOnAction(e -> {
+            root.setDisable(false);
+            pauseButton.fire();
+            timer.cancel();
+            timeSeconds = 0;
+            showLoginScene();
+            primaryStage.close();
+        });
+
+        HBox logoutBox = new HBox(10, logoutButton);
+        logoutBox.setAlignment(Pos.CENTER);
+
+        // Exit Button
+        Button exitButton = new Button("EXIT");
+        exitButton.setStyle("-fx-padding: 8 15 15 15;" +
+                " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                "-fx-background-radius: 8;" +
+                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, " +
+                "#d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        exitButton.setOnAction(e -> System.exit(0));
+
+        HBox exitBox = new HBox(10, exitButton);
+        exitBox.setAlignment(Pos.CENTER);
+
+        //Mouse Over Effects
+
+        //Mouse Pressed Events
+        exitButton.setOnMouseEntered(event -> {
+            exitButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+        logoutButton.setOnMouseEntered(event -> {
+            logoutButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+        settingsButton.setOnMouseEntered(event -> {
+            settingsButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+        resumeButton.setOnMouseEntered(event -> {
+            resumeButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, " +
+                    "#8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+
+        exitButton.setOnMouseExited(event -> {
+            exitButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, " +
+                    "#d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+        logoutButton.setOnMouseExited(event -> {
+            logoutButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, " +
+                    "#3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+        settingsButton.setOnMouseExited(event -> {
+            settingsButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, " +
+                    "#6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
+        });
+        resumeButton.setOnMouseExited(event -> {
+            resumeButton.setStyle("-fx-padding: 8 15 15 15;" +
+                    "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, " +
+                    "#d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 1.1em;" +
+                    "-fx-text-fill: white;");
+        });
+
+        // Layout
+        VBox layout = new VBox(20, titleBox, resumeBox, settingsBox, logoutBox, exitBox);
+        layout.setPadding(new Insets(20));
+        layout.setAlignment(Pos.CENTER);
+        layout.setBackground(new Background(new BackgroundFill(Color.rgb(39, 38, 38), CornerRadii.EMPTY,
+                Insets.EMPTY)));
+
+        StackPane root = new StackPane(layout);
+        root.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+
+        Scene scene = new Scene(root, 400, 400);
+
+        primaryStage.setScene(scene);
+        primaryStage.initStyle(StageStyle.UNDECORATED);
+        primaryStage.show();
     }
 
     class TreeNode {
@@ -836,460 +1372,5 @@ public class HelloApplication extends Application {
                 inOrderTraversal(node.right, action);
             }
         }
-    }
-
-    private void promptDeleteSaveGame() {
-        File saveDir = new File("saves");
-        File[] saveFiles = saveDir.listFiles((dir, name) -> name.endsWith(".txt"));
-        if (saveFiles == null || saveFiles.length == 0) {
-            System.out.println("No saved games found.");
-            return;
-        }
-
-        BinarySearchTree bst = new BinarySearchTree();
-        for (File file : saveFiles) {
-            String name = file.getName().substring(0, file.getName().length() - 4); // Remove .txt extension
-            bst.insert(name);
-        }
-
-        List<String> choices = Arrays.stream(saveFiles)
-                .map(File::getName)
-                .map(name -> name.substring(0, name.length() - 4)) // Remove .txt extension
-                .collect(Collectors.toList());
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
-        dialog.setTitle("Delete Saved Game");
-        dialog.setHeaderText("Delete a saved game");
-        dialog.setContentText("Choose a save file to delete:");
-
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(fileName -> {
-            bst.delete(fileName);
-            deleteGameFile(fileName);
-        });
-    }
-
-    private void deleteGameFile(String fileName) {
-        String filePath = "saves/" + fileName + ".txt";
-        File file = new File(filePath);
-        if (file.delete()) {
-            System.out.println("Saved game " + fileName + " deleted successfully.");
-        } else {
-            System.out.println("Failed to delete saved game " + fileName + ".");
-        }
-    }
-
-
-    // Method to prompt user for save file name
-    private void promptSaveGame() {
-        TextInputDialog dialog = new TextInputDialog("savegame");
-        dialog.setTitle("Save Game");
-        dialog.setHeaderText("Save your game");
-        dialog.setContentText("Enter save file name:");
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            try {
-                SecretKey key = CryptoUtils.loadOrGenerateKey("saves/secretKey.key");
-                saveGame(result.get(), key);
-            } catch (IOException e) {
-                System.out.println("An error occurred while loading the encryption key: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void promptLoadGame() {
-        File saveDir = new File("saves");
-        File[] saveFiles = saveDir.listFiles((dir, name) -> name.endsWith(".bin"));
-        if (saveFiles == null || saveFiles.length == 0) {
-            System.out.println("No saved games found.");
-            return;
-        }
-
-        List<String> choices = Arrays.stream(saveFiles)
-                .map(File::getName)
-                .map(name -> name.substring(0, name.length() - 4)) // Remove .bin extension
-                .collect(Collectors.toList());
-
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
-        dialog.setTitle("Load Game");
-        dialog.setHeaderText("Load a saved game");
-        dialog.setContentText("Choose your saved game:");
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            try {
-                SecretKey key = CryptoUtils.loadKey("saves/secretKey.key");
-                loadGame(result.get(), key);
-            } catch (IOException e) {
-                System.out.println("An error occurred while loading the encryption key: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-
-
-    private void saveGame(String fileName, SecretKey key) {
-        String filePath = "saves/" + fileName + ".bin"; // Store saves in a "saves" directory
-        StringBuilder gameData = new StringBuilder();
-
-        gameData.append("Player 1: ").append(player1Name).append("\n");
-        gameData.append("Player 2: ").append(player2Name).append("\n");
-        gameData.append("Board Size: ").append(boardSize).append("\n");
-        gameData.append("White Turn: ").append(whiteTurn).append("\n");
-        gameData.append("Time Taken: ").append(timeSeconds).append("\n");
-        gameData.append("Player 1 Score: ").append(player1Score.getText()).append("\n");
-        gameData.append("Player 2 Score: ").append(player2Score.getText()).append("\n");
-
-        for (int row = 0; row < boardSize; row++) {
-            for (int col = 0; col < boardSize; col++) {
-                if (board[row][col] == null) {
-                    gameData.append("EMPTY ");
-                } else if (board[row][col] == Color.WHITE) {
-                    gameData.append("WHITE ");
-                } else if (board[row][col] == Color.BLACK) {
-                    gameData.append("BLACK ");
-                } else if (board[row][col] == Color.GRAY) {
-                    gameData.append("EMPTY "); // Treat ghost pieces as EMPTY
-                }
-            }
-            gameData.append("\n");
-        }
-
-        try {
-            byte[] encryptedData = CryptoUtils.encrypt(gameData.toString(), key);
-            Files.write(Paths.get(filePath), encryptedData);
-            System.out.println("Game saved successfully! " + filePath);
-        } catch (Exception e) {
-            System.out.println("An error occurred while saving the game: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-
-    private void loadGame(String fileName, SecretKey key) {
-        String filePath = "saves/" + fileName + ".bin";
-        System.out.println("Loading game from file: " + filePath);
-
-        try {
-            byte[] encryptedData = Files.readAllBytes(Paths.get(filePath));
-            String gameData = CryptoUtils.decrypt(encryptedData, key);
-
-            BufferedReader reader = new BufferedReader(new StringReader(gameData));
-            player1Name = reader.readLine().split(": ")[1];
-            player2Name = reader.readLine().split(": ")[1];
-            boardSize = Integer.parseInt(reader.readLine().split(": ")[1].trim());
-            whiteTurn = Boolean.parseBoolean(reader.readLine().split(": ")[1].trim());
-            timeSeconds = Integer.parseInt(reader.readLine().split(": ")[1].trim());
-            String p1Score = reader.readLine().split(": ")[1].trim();
-            String p2Score = reader.readLine().split(": ")[1].trim();
-            player1Score = new Text(p1Score);
-            player2Score = new Text(p2Score);
-
-            board = new Color[boardSize][boardSize];
-            for (int row = 0; row < boardSize; row++) {
-                String[] line = reader.readLine().split(" ");
-                for (int col = 0; col < boardSize; col++) {
-                    switch (line[col]) {
-                        case "WHITE":
-                            board[row][col] = Color.WHITE;
-                            break;
-                        case "BLACK":
-                            board[row][col] = Color.BLACK;
-                            break;
-                        case "EMPTY":
-                            board[row][col] = null;
-                            break;
-                    }
-                }
-            }
-
-            // Refresh UI to reflect the loaded game state
-            showGameBoardScene();
-            restoreBoardUI();
-            updateScores();
-            turnLabel.setText(whiteTurn ? "White turn" : "Black turn");
-            isPaused = false;
-            startTimer(timeSeconds);
-
-            System.out.println("Game loaded successfully!");
-        } catch (Exception e) {
-            System.out.println("An error occurred while loading the game: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-
-    private void restoreBoardUI() {
-        boardGrid.getChildren().clear(); // Clear existing cells to avoid duplicates
-        for (int row = 0; row < boardSize; row++) {
-            for (int col = 0; col < boardSize; col++) {
-                StackPane cell = createCell(row, col);
-                boardGrid.add(cell, col, row);
-            }
-        }
-    }
-
-    private void startTimer(int initialTime) {
-        if (timer != null) {
-            timer.cancel();
-        }
-        timeSeconds = initialTime;
-        timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                if (!isPaused) {
-                    timeSeconds++;
-                    int minutes = timeSeconds / 60;
-                    int seconds = timeSeconds % 60;
-                    timerLabel.setText(String.format("%02d:%02d", minutes, seconds));
-                }
-            }
-        }, 1000, 1000);
-    }
-
-    private void togglePause() {
-        isPaused = !isPaused;
-        pauseButton.setText(isPaused ? "Resume" : "Pause");
-    }
-
-    private void updateScores() {
-        int whiteScore = 0;
-        int blackScore = 0;
-
-        for (int row = 0; row < boardSize; row++) {
-            for (int col = 0; col < boardSize; col++) {
-                if (board[row][col] == Color.WHITE) {
-                    whiteScore++;
-                } else if (board[row][col] == Color.BLACK) {
-                    blackScore++;
-                }
-            }
-        }
-
-        player1Score.setText(String.valueOf(whiteScore));
-        player2Score.setText(String.valueOf(blackScore));
-    }
-
-
-    private void checkGameOver() {
-        boolean hasEmptyCell = false;
-        boolean hasValidMoveWhite = false;
-        boolean hasValidMoveBlack = false;
-
-        for (int row = 0; row < boardSize; row++) {
-            for (int col = 0; col < boardSize; col++) {
-                if (board[row][col] == null) {
-                    hasEmptyCell = true;
-                    if (isValidMove(row, col, Color.WHITE)) {
-                        hasValidMoveWhite = true;
-                    }
-                    if (isValidMove(row, col, Color.BLACK)) {
-                        hasValidMoveBlack = true;
-                    }
-                }
-            }
-        }
-
-        if (!hasEmptyCell || (!hasValidMoveWhite && !hasValidMoveBlack)) {
-            declareWinner();
-        } else if (!hasValidMoveWhite && whiteTurn) {
-            whiteTurn = false; // Skip White's turn
-            turnLabel.setText("Black turn");
-        } else if (!hasValidMoveBlack && !whiteTurn) {
-            whiteTurn = true; // Skip Black's turn
-            turnLabel.setText("White turn");
-        }
-    }
-
-    private void declareWinner() {
-        int whiteScore = Integer.parseInt(player1Score.getText());
-        int blackScore = Integer.parseInt(player2Score.getText());
-
-        String winner;
-        if (whiteScore > blackScore) {
-            winner = player1Name + " (White) wins!";
-        } else if (blackScore > whiteScore) {
-            winner = player2Name + " (Black) wins!";
-        } else {
-            winner = "It's a draw!";
-        }
-
-        // Display the winner
-        turnLabel.setText(winner);
-        timer.cancel();
-        pauseButton.setDisable(true);
-    }
-
-    private void showPauseMenu() {
-
-        Stage primaryStage = new Stage();
-
-        // Title
-        Text title = new Text("Othello");
-        title.setFont(Font.font("adobe arabic", FontWeight.BOLD, FontPosture.REGULAR, 50));
-        title.setUnderline(true);
-        title.setFill(Color.WHITE);
-
-        HBox titleBox = new HBox(title);
-        titleBox.setAlignment(Pos.CENTER);
-
-        // Resume Button
-        Button resumeButton = new Button("RESUME");
-        resumeButton.setStyle("-fx-padding: 8 15 15 15;" +
-                "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                "-fx-font-weight: bold;-fx-font-size: 1.1em;-fx-text-fill: white;");
-        resumeButton.setOnAction(e -> {root.setDisable(false); pauseButton.fire(); primaryStage.close();});
-
-        HBox resumeBox = new HBox(10, resumeButton);
-        resumeBox.setAlignment(Pos.CENTER);
-
-        // Settings Button
-        Button settingsButton = new Button("SETTINGS");
-        settingsButton.setStyle("-fx-padding: 8 15 15 15;" +
-                " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, #6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 1.1em;-fx-text-fill: white;");
-
-        HBox settingsBox = new HBox(10, settingsButton);
-        settingsBox.setAlignment(Pos.CENTER);
-
-        Setting setting = new Setting();
-        settingsButton.setOnAction(e -> Setting.openSettings());
-
-        // Log Out Button
-        Button logoutButton = new Button("LOG OUT");
-        logoutButton.setStyle("-fx-padding: 8 15 15 15;" +
-                " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, #3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        logoutButton.setOnAction(e -> {root.setDisable(false); pauseButton.fire(); timer.cancel(); timeSeconds = 0; showLoginScene(); primaryStage.close();});
-
-        HBox logoutBox = new HBox(10, logoutButton);
-        logoutBox.setAlignment(Pos.CENTER);
-
-        // Exit Button
-        Button exitButton = new Button("EXIT");
-        exitButton.setStyle("-fx-padding: 8 15 15 15;" +
-                " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                "-fx-background-radius: 8;" +
-                "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, #d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        exitButton.setOnAction(e -> System.exit(0));
-
-        HBox exitBox = new HBox(10, exitButton);
-        exitBox.setAlignment(Pos.CENTER);
-
-        //Mouse Over Effects
-
-        //Mouse Pressed Events
-        exitButton.setOnMouseEntered(event -> {
-            exitButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-        logoutButton.setOnMouseEntered(event -> {
-            logoutButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-        settingsButton.setOnMouseEntered(event -> {
-            settingsButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-        resumeButton.setOnMouseEntered(event -> {
-            resumeButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#5d595a 0%,#525051 100%), #625f60, #8f8385, radial-gradient(center 50% 50%, radius 100%,#918285,#7b7677);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-
-        exitButton.setOnMouseExited(event -> {
-            exitButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a3132b 0%,#901228 100%), #9d2445, #d83a55, radial-gradient(center 50% 50%, radius 100%,#d93a56,#c52c57);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-        logoutButton.setOnMouseExited(event -> {
-            logoutButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#1373a3 0%,#126790 100%), #24819d, #3aa4d8, radial-gradient(center 50% 50%, radius 100%,#3aa5d9,#2ca3c5);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-        settingsButton.setOnMouseExited(event -> {
-            settingsButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    " -fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#4313a3 0%,#3b1290 100%), #40249d, #6e3ad8, radial-gradient(center 50% 50%, radius 100%,#6e3ad9,#4e2cc5);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;-fx-text-fill: white;");
-        });
-        resumeButton.setOnMouseExited(event -> {
-            resumeButton.setStyle("-fx-padding: 8 15 15 15;" +
-                    "-fx-background-insets: 0,0 0 5 0,0 0 6 0,0 0 7 0;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-background-color:linear-gradient(from 0% 93% to 0% 100%,#a34313 0%,#903b12 100%), #9d4024, #d86e3a, radial-gradient(center 50% 50%, radius 100%,#d96e3a,#c54e2c);" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75),4,0,0,1);" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-font-size: 1.1em;" +
-                    "-fx-text-fill: white;");
-        });
-
-        // Layout
-        VBox layout = new VBox(20, titleBox, resumeBox, settingsBox, logoutBox, exitBox);
-        layout.setPadding(new Insets(20));
-        layout.setAlignment(Pos.CENTER);
-        layout.setBackground(new Background(new BackgroundFill(Color.rgb(39, 38, 38), CornerRadii.EMPTY, Insets.EMPTY)));
-
-        StackPane root = new StackPane(layout);
-        root.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
-
-        Scene scene = new Scene(root, 400, 400);
-
-        primaryStage.setScene(scene);
-        primaryStage.initStyle(StageStyle.UNDECORATED);
-        primaryStage.show();
-    }
-
-    public static void main(String[] args) {
-        launch();
     }
 }
